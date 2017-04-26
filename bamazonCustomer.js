@@ -21,62 +21,48 @@ connection.connect(function(error) {
 
 var display = function() {
   connection.query("SELECT * FROM products", function(error, response) {
+    if (error) {return err;
+    }; 
     // console.log(response);
     for (var i = 0; i < response.length; i++) {
       console.log("ID: " + response[i].item_id + " ||Product: " + response[i].product_name + " ||Department: " + response[i].department_name + " ||Price: " + response[i].price + " ||Quantity: " + response[i].stock_quantity);
     }
     console.log("__________________________________________");
     console.log("Our Inventory!")
-    customerDecision();
+    // customerDecision();
   });
 };
 
-
-var customerDecision = function() {
-    connection.query("SELECT * FROM products"),
-      function(error, results) {
-        if (error) throw error;
-      }
-    inquirer.prompt([{
-        name: "choice",
-        type: "rawlist",
-        choices: function() {
-          var choiceArray = [];
-          for (var i = 0; i < results.length; i++) {
-            choiceArray.push(results[i].item_id);
-          }
-          return choiceArray;
-        },
-        message: "Please input the ID of the product you would like to buy."
-      }]).then(function(answer) {
-          var chosenItem;
-          for (var i = 0; i < results.length; i++) {
-            if (results[i].item_id === answer.choice) {
-              chosenItem = results[i];
-              inquirer.prompt([{
-                name: "stock_quantity",
-                type: "input",
-                message: "how many units of the product would you like to buy?",
-                validate: function(value) {
-                  if (isNaN(value) === false) {
-                    return true;
-                  }
-                  return false;
-                }
-              }]).then(function(answer) {
-                  //determine if stock quantity < 0 / insufficient or minus the user input
-                  if ((product.stock_quantity - chosenItem.stock_quantity) > 0) {
-                    connection.query("UPDATE products SET stock_quantity='" + (product.stock_quantity - chosenItem.stock_quantity), function(error, results2) {
-                      console.log('Product Bought');
-                      display();
-                    });
-                  } else {
-                    console.log("Insufficient quantity!");
-                  }
-                });
-            }
-        }
-    });
-};
-
 display();
+customerDecision();
+
+function customerDecision() {
+  inquirer.prompt([{
+    type: "input",  
+    message: "Please input the ID of the product you would like to buy",
+    name: "itemId"
+  }]).then(function(response) {
+      inquirer.prompt([{
+        name: "stockQuantity",
+        type: "input",
+        message: "how many units of the product would you like to buy?",
+      }]).then(function(res){
+        var SQLlist = "SELECT stock_quantity, price FROM bamazon_db.products WHERE item_id=" + response.itemId;
+        connection.query(SQLlist, function(err, res){
+          if (err) throw console.log("error is right here" + err);
+          if (res.stock_quantity < res.stockQuantity) {
+            console.log("insufficient quantity!");
+          } else {
+            SQLlist = "UPDATE products SET stock_quantity =" + (res.stock_quantity - res.stockQuantity) + "WHERE item_id=" + response.itemId;
+            connection.query(SQLlist, function(err, res){
+              if (err) throw err;
+              var totalCost = res.stockQuantity * res.price;
+              console.log("Total Cost: " + totalCost);
+            }) 
+          }
+        })
+
+      })
+    })
+}
+

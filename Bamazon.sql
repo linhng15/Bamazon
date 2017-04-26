@@ -1,5 +1,5 @@
-CREATE DATABASE Bamazon;
-USE Bamazon;
+CREATE DATABASE Bamazon_db;
+USE Bamazon_db;
 
 #Then create a Table inside of that database called products.
 
@@ -13,3 +13,5 @@ CREATE TABLE products (
 );
 
 SELECT * FROM products;
+
+SELECT * FROM products WHERE item_id;
